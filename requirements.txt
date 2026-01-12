@@ -27,8 +27,8 @@ azure-nspkg==3.0.2
 azure-storage-blob==2.1.0
 azure-storage-common==2.1.0
 
-# Security / crypto
-cryptography==46.0.3
+# Security / crypto (compatible versions)
+cryptography==41.0.0
 cffi>=1.15.1
 pyopenssl==23.2.0
 PyJWT==2.10.1
