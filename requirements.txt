@@ -22,18 +22,18 @@ chardet==5.1.0
 idna==3.4
 charset_normalizer==3.4.4
 
-# Azure packages (modern versions, v12+)
+# Azure packages (modern, v12+)
 azure-identity==1.14.0
 azure-storage-blob==12.26.0
 azure-core==1.32.0
 
-# Security / crypto
+# Security / crypto (compatible set)
 cryptography==41.0.0
-pyOpenSSL==22.1.0
-cffi==1.15.1
+pyOpenSSL==23.2.0
+cffi>=1.15.1
 PyJWT==2.10.1
 
-# MSAL (compatible with cryptography 41)
+# MSAL
 msal==1.21.0
 
 # Misc
@@ -45,6 +45,6 @@ pycparser==2.21
 gunicorn==23.0.0
 Mako==1.2.4
 
-# Pip & setuptools (latest)
+# Tooling
 pip>=23.2
 setuptools>=68.0
