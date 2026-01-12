@@ -1,10 +1,8 @@
 """
 Routes and views for the flask application.
 """
-
 from datetime import datetime
 from flask import render_template, flash, redirect, request, session, url_for
-from werkzeug.urls import url_parse
 from config import Config
 from FlaskWebProject import app, db
 from FlaskWebProject.forms import LoginForm, PostForm
@@ -14,9 +12,8 @@ import msal
 import uuid
 
 imageSourceUrl = (
-    'https://' + app.config['BLOB_ACCOUNT']
-    + '.blob.core.windows.net/'
-    + app.config['BLOB_CONTAINER'] + '/'
+    f"https://{app.config['BLOB_ACCOUNT']}.blob.core.windows.net/"
+    f"{app.config['BLOB_CONTAINER']}/"
 )
 
 @app.route('/')
@@ -29,20 +26,20 @@ def home():
 @app.route('/new_post', methods=['GET', 'POST'])
 @login_required
 def new_post():
-    form = PostForm(request.form)
+    form = PostForm()
     if form.validate_on_submit():
         post = Post()
-        post.save_changes(form, request.files['image_path'], current_user.id, new=True)
+        post.save_changes(form, request.files.get('image_path'), current_user.id, new=True)
         return redirect(url_for('home'))
     return render_template('post.html', title='Create Post', imageSource=imageSourceUrl, form=form)
 
 @app.route('/post/<int:id>', methods=['GET', 'POST'])
 @login_required
 def post(id):
-    post = Post.query.get(int(id))
-    form = PostForm(formdata=request.form, obj=post)
+    post = Post.query.get_or_404(id)
+    form = PostForm(obj=post)
     if form.validate_on_submit():
-        post.save_changes(form, request.files['image_path'], current_user.id)
+        post.save_changes(form, request.files.get('image_path'), current_user.id)
         return redirect(url_for('home'))
     return render_template('post.html', title='Edit Post', imageSource=imageSourceUrl, form=form)
 
@@ -55,7 +52,7 @@ def login():
 
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
-        if user is None or not user.check_password(form.password.data):
+        if not user or not user.check_password(form.password.data):
             app.logger.warning("Invalid local login attempt")
             flash('Invalid username or password')
             return redirect(url_for('login'))
@@ -73,7 +70,6 @@ def authorized():
         return redirect(url_for("home"))
 
     if "error" in request.args:
-        app.logger.warning("Microsoft login failed")
         return render_template("auth_error.html", result=request.args)
 
     if request.args.get('code'):
@@ -85,14 +81,9 @@ def authorized():
         )
 
         if "error" in result:
-            app.logger.warning("Microsoft login unsuccessful")
             return render_template("auth_error.html", result=result)
 
         session["user"] = result.get("id_token_claims")
-        app.logger.info(
-            f"Microsoft login success: {session['user'].get('preferred_username')}"
-        )
-
         user = User.query.filter_by(username="admin").first()
         login_user(user)
         _save_cache(cache)
@@ -102,14 +93,12 @@ def authorized():
 @app.route('/logout')
 def logout():
     logout_user()
-    if session.get("user"):
-        session.clear()
-        return redirect(
-            Config.AUTHORITY + "/oauth2/v2.0/logout"
-            + "?post_logout_redirect_uri="
-            + url_for("login", _external=True)
-        )
-    return redirect(url_for('login'))
+    session.clear()
+    return redirect(
+        Config.AUTHORITY + "/oauth2/v2.0/logout"
+        + "?post_logout_redirect_uri="
+        + url_for("login", _external=True)
+    )
 
 # ---------- MSAL HELPERS ----------
 

@@ -11,7 +11,7 @@ from flask_session import Session
 app = Flask(__name__)
 app.config.from_object(Config)
 
-# ✅ LOGGING (Rubric requirement)
+# Logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(message)s"
@@ -23,4 +23,4 @@ db = SQLAlchemy(app)
 login = LoginManager(app)
 login.login_view = 'login'
 
-import FlaskWebProject.views
+from FlaskWebProject import views
