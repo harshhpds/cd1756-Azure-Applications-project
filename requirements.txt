@@ -17,7 +17,7 @@ MarkupSafe==2.1.2
 # HTTP / Requests
 requests==2.32.5
 urllib3==2.6.3
-certifi==2025.7.1
+certifi==2024.12.14   # ✅ pick the latest stable real version
 chardet==5.1.0
 idna==3.4
 
@@ -32,7 +32,6 @@ cryptography==46.0.3
 cffi==1.15.1
 pyopenssl==23.2.0
 PyJWT==2.10.1
-types-cryptography==46.0.3
 
 # Misc
 Click==8.1.7
