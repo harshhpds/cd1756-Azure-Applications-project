@@ -44,7 +44,7 @@ Despite its advantages, Azure App Service proved difficult to configure for this
 For this project, **Azure Virtual Machine (VM)** was selected as the deployment resource.
 
 The VM approach enabled faster setup, easier debugging, and greater control over the application environment. This allowed successful configuration of HTTPS, Microsoft authentication, logging, database connections, and Azure Blob Storage within the project timeline. Given the project scope and learning objectives, the VM was the most appropriate and practical choice for deploying the CMS application.
-
+### URL : - https://20.40.56.249:5000/login
 ---
 
 ## Assess app changes that would change My decision
