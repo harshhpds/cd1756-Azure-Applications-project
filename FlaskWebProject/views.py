@@ -1,5 +1,5 @@
 """
-Routes and views for the flask application.
+Routes and views for the Flask application.
 """
 from datetime import datetime
 from flask import render_template, flash, redirect, request, session, url_for
@@ -16,6 +16,8 @@ imageSourceUrl = (
     f"{app.config['BLOB_CONTAINER']}/"
 )
 
+# ---------- ROUTES ----------
+
 @app.route('/')
 @app.route('/home')
 @login_required
@@ -27,21 +29,34 @@ def home():
 @login_required
 def new_post():
     form = PostForm()
+    image_url = None
+
     if form.validate_on_submit():
         post = Post()
         post.save_changes(form, request.files.get('image_path'), current_user.id, new=True)
+        if post.image_path:
+            image_url = f"https://{app.config['BLOB_ACCOUNT']}.blob.core.windows.net/{app.config['BLOB_CONTAINER']}/{post.image_path}"
         return redirect(url_for('home'))
-    return render_template('post.html', title='Create Post', imageSource=imageSourceUrl, form=form)
+
+    return render_template('post.html', title='Create Post', imageSource=image_url, form=form)
+
 
 @app.route('/post/<int:id>', methods=['GET', 'POST'])
 @login_required
 def post(id):
-    post = Post.query.get_or_404(id)
-    form = PostForm(obj=post)
+    post_obj = Post.query.get_or_404(id)
+    form = PostForm(obj=post_obj)
+
+    image_url = None
+    if post_obj.image_path:
+        image_url = f"https://{app.config['BLOB_ACCOUNT']}.blob.core.windows.net/{app.config['BLOB_CONTAINER']}/{post_obj.image_path}"
+
     if form.validate_on_submit():
-        post.save_changes(form, request.files.get('image_path'), current_user.id)
+        post_obj.save_changes(form, request.files.get('image_path'), current_user.id)
         return redirect(url_for('home'))
-    return render_template('post.html', title='Edit Post', imageSource=imageSourceUrl, form=form)
+
+    return render_template('post.html', title='Edit Post', imageSource=image_url, form=form)
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -60,9 +75,11 @@ def login():
         app.logger.info(f"Local login success: {user.username}")
         return redirect(url_for('home'))
 
+    # OAuth2: generate state and auth URL inside the request
     session["state"] = str(uuid.uuid4())
     auth_url = _build_auth_url(scopes=Config.SCOPE, state=session["state"])
     return render_template('login.html', title='Sign In', form=form, auth_url=auth_url)
+
 
 @app.route(Config.REDIRECT_PATH)
 def authorized():
@@ -90,6 +107,7 @@ def authorized():
 
     return redirect(url_for('home'))
 
+
 @app.route('/logout')
 def logout():
     logout_user()
@@ -99,6 +117,7 @@ def logout():
         + "?post_logout_redirect_uri="
         + url_for("login", _external=True)
     )
+
 
 # ---------- MSAL HELPERS ----------
 
@@ -113,6 +132,7 @@ def _save_cache(cache):
         session["token_cache"] = cache.serialize()
 
 def _build_msal_app(cache=None):
+    """Create a ConfidentialClientApplication with the updated CLIENT_ID and CLIENT_SECRET."""
     return msal.ConfidentialClientApplication(
         Config.CLIENT_ID,
         authority=Config.AUTHORITY,
@@ -121,6 +141,7 @@ def _build_msal_app(cache=None):
     )
 
 def _build_auth_url(scopes=None, state=None):
+    """Generate the Microsoft login URL with the correct redirect URI and state."""
     return _build_msal_app().get_authorization_request_url(
         scopes=scopes,
         state=state,
